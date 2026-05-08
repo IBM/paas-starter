@@ -1,0 +1,32 @@
+# the following two variables should most likely be put into environment variable with TF_VAR_ as the prefix instead
+# of hardcoding them here.
+# the postresql admin password must be at least 15 character, have a number and upper and lower case letters
+# ibmcloud_api_key = "your_api_key"
+# postgresql_admin_pword = "your_password"
+
+# set the following variables to your liking. The default values are shown below.
+
+# all resources created will be prefixed with this value
+# prefix = "xyz"
+
+# the region all resources will be created in. To get a list of available regions, run '$ibmcloud regions'
+# region = "us-south"
+
+# provide the name of an existing resource group to provision resources in to. 
+# if not set a resource group name will be created using the prefix variable.
+# resource_group = null
+
+# name of the new IBM Cloud OpenShift Cluster. 
+# if not set the cluster name will be created using the prefix variable.
+# cluster_name = null
+
+# the number of workers to create in the cluster. Must be a number greater than or equal to 2
+# it is suggested to keep this number low unless you have sized workloads you intend to deploy on this test cluster.
+# number_worker_nodes = 2
+
+# Major.minor version of the OCP cluster to provision. To get a list of available versions, run '$ibmcloud ks versions'
+# ocp_version = "4.20"
+
+# Worker node machine type. Use 'ibmcloud ks flavors --zone <zone>' to retrieve the list. 
+# zone 1 is used for all worker nodes in this terrafom configuration. Therefore, the default zone will be 'us-south-1'
+# machine_type = "bx2.4x16"

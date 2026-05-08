@@ -1,0 +1,86 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: helloworld-postgres
+  labels:
+    app: helloworld-postgres
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: helloworld-postgres
+  template:
+    metadata:
+      labels:
+        app: helloworld-postgres
+    spec:
+      containers:
+      - name: helloworld
+        image: icr.io/<namespace>/<your image>:<tag>
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8080
+          protocol: TCP
+        envFrom:
+        - secretRef:
+            name: postgres-credentials
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 30
+          timeoutSeconds: 3
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 3
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: helloworld-postgres
+  labels:
+    app: helloworld-postgres
+spec:
+  selector:
+    app: helloworld-postgres
+  ports:
+  - name: http
+    port: 8080
+    targetPort: 8080
+    protocol: TCP
+  type: ClusterIP
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: helloworld-postgres
+  labels:
+    app: helloworld-postgres
+spec:
+  to:
+    kind: Service
+    name: helloworld-postgres
+    weight: 100
+  port:
+    targetPort: http
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
+  wildcardPolicy: None
+
+# Made with Bob
