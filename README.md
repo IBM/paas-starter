@@ -276,7 +276,7 @@ $ cd paas-starter
 
 **2.1 Terraform Variables**
 
-The terraform configuration uses variables to allow you to customize the deployment. There is a file called `terraform.tfvars-example` that contains all the variables and their default values. You can copy this file to `terraform.tfvars` and then edit the values to customize your deployment.
+The terraform configuration uses variables to allow you to customize the deployment. There is a file called `terraform_tfvars.example` that contains all the variables and their default values. You can copy this file to `terraform.tfvars` and then edit the values to customize your deployment.
 There are only 2 variables that are required. All other variables have default values that work well for most users. The two required variables are:
 - `ibmcloud_api_key`: Your IBM Cloud API Key
 - `postgresql_password`: The password for the PostgreSQL database
@@ -294,10 +294,10 @@ This keeps your API key and password out of files and is the most secure option.
 **Option B: Terraform Variables File**
 
 If you don't want to use environment variables, you can create a file called `terraform.tfvars` and add your variables to it. The file should be in the same directory as your Terraform configuration files.
-To use the `terraform.tfvars` file, copy the `terraform.tfvars-example` file to `terraform.tfvars`:
+To use the `terraform.tfvars` file, copy the `terraform_tfvars.example` file to `terraform.tfvars`:
 
 ```bash
-$ cp terraform.tfvars-example terraform.tfvars
+$ cp terraform_tfvars.example terraform.tfvars
 ```
 
 Then edit `terraform.tfvars` and add your API key and your Postgesql password:
@@ -311,7 +311,7 @@ postgresql_password = "your-postgresql-password-here"
 
 **2.2 Customize Your Configuration**
 
-Look at the `terraform_tfvars.example` file. If you would like to set any variables to something other than its default value, copy the `terraform.tfvars-example` file to `terraform.tfvars` Edit the `terraform.tfvars` file to customize your deployment. The example file has all the variables defined. You can customize these for your environment.
+Look at the `terraform_tfvars.example` file. If you would like to set any variables to something other than its default value, copy the `terraform_tfvars.example` file to `terraform.tfvars` Edit the `terraform.tfvars` file to customize your deployment. The example file has all the variables defined. You can customize these for your environment.
 
 ### Step 3: Initialize Terraform
 
@@ -413,6 +413,8 @@ Stage 5: Finalization (1-2 minutes)
 
 ⏱️ **Total Time Required**: 30-45 minutes
 
+> **Note**: The first resource to be created in the configuration is a new container registry namespace. These namespaces must be regionally unique across all accounts. Therefore there is a chance some account might have already taken the name the config specifies. In an attempt to reduce the likelihood of this happening, the name will be not only use the prefix you specify but also include a random 6 character string. If you get an error indicating the namespace is already in use, run the config again and the random string will be different.
+
 **Success Indicators:**
 
 When deployment completes successfully, you'll see:
@@ -434,14 +436,38 @@ After deployment completes, access your newly created resources:
 
 **6.1 OpenShift Cluster**
 
-Assuming you have the IBM Cloud command line interface and your API key:
+Assuming you have the IBM Cloud command line interface and your API key, lets first login to the IBM Cloud CLI and set your target. The default region is `us-south`. Set it accordingly if you changed the region.
 
 ```bash
+# grab your resource group
+$ terraform output resource_group
 # Log in to IBM Cloud CLI
-$ ibmcloud login --apikey $TF_VAR_ibmcloud_api_key
+$ ibmcloud login --apikey <apikey>
+# set your target region
+$ ibmcloud login -r us-south
+# set your target resource group
+$ ibmcloud target -g <resource-group>
+```
 
+Show your target and it should look something like this:
+
+```bash
+$ ibmcloud target
+
+API endpoint:     https://cloud.ibm.com
+Region:           us-south
+User:             <your username>
+Account:          <your name> (<alphanumeric account ID>) <-> <IMS account ID>
+Resource group:   <prefix>-resource-group
+```
+
+Now you can access your cluster:
+
+```bash
+# get cluster name
+$ terraform output cluster_name
 # Get cluster configuration
-$ ibmcloud oc cluster config --cluster $(terraform output -raw cluster_name)
+$ ibmcloud oc cluster config --cluster <cluster_name>
 ```
 
 Then verify cluster access:
@@ -486,8 +512,21 @@ $ cd helloworld
 
 Use Podman or Docker to build the application Docker image. Get the Container Registry namespace from the terraform output and replace the `namespace` placeholder in the build command. Login to the IBM Cloud container registry and run the build command. Finally, push the image to the IBM Cloud container registry.
 
+The default region for this config is `us-south` so the instruction below will make that assumption. If you are using a different region, you will need to update the region in the build command. First, you must make sure you login to the IBM Cloud container registry and login podman to the container registry.
+
 ```bash
+$ ibmcloud cr region-set us-south
+$ ibmcloud cr login
 $ podman login us.icr.io
+```
+
+You will need your container registry namespace. You will find it in the terraform output. Or you can run the following command to get the namespace. Remember that your namespace is prepended by both the prefix and a random string. An example would be `prefix-randomstring-ns`
+
+```bash
+$ ibmcloud cr namespaces
+```
+
+```bash
 $ podman build --platform linux/amd64 -t us.icr.io/{namespace}/helloworld-postgres:latest .
 $ podman push us.icr.io/{namespace}/helloworld-postgres:latest
 ```
@@ -514,9 +553,20 @@ stringData:
   DB_CERT: "REPLACE_WITH_YOUR_BASE64_CERT"
 ```
 
+If you prefer to not use the `secrets.yaml` file, you can instead create the secret on the command line using
+
+```bash
+$ oc create secret generic postgres-credentials --from-literal=DB_PASSWORD="<PASSWORD>" --from-literal=DB_URL="<connection-url>" --from-literal=DB_CERT="<base64encodedcert>"
+```
+
 **7.3 Configure the Deployment**
 
-Edit the deploy.yaml file and add your namespace in the image field.
+Edit the deploy.yaml file and add your namespace in the image field. Remember, to find your namespace, run the following command. It will be the one that looks like <previx>-<randomstring>-ns if you kept the terraform defaults.
+```bash
+$ ibmcloud cr namespaces
+```
+
+Now update the image field with your namespace.
 
 ```hcl
 apiVersion: apps/v1
@@ -608,7 +658,7 @@ spec:
 **7.4 Deploy to OpenShift**
 
 ```bash
-$ oc apply -f secret.yaml
+$ oc apply -f secret.yaml  # skip if you used the command line
 $ oc apply -f deploy.yaml
 ```
 
@@ -617,8 +667,8 @@ Check the success of these commands. Your pod name will differ slightly.
 ```bash
 $ oc get secrets
 NAME                      TYPE                                  DATA   AGE
-postgres-credentials      Opaque                               3      6h37m
-```
+postgres-credentials      Opaque                                3      6h37m
+``` 
 
 ```bash
 $ oc get pods

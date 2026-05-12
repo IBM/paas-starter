@@ -1,4 +1,22 @@
 ########################################################################################################################
+# container registry namespace - since this must be unique across all accounts in a region, we will attempt to create
+# it first so if we can try again if it already exists
+########################################################################################################################
+resource "random_string" "random" {
+  length   = 6
+  lower    = true
+  numeric  = false
+  upper    = false
+  special  = false
+}
+
+resource "ibm_cr_namespace" "rg_namespace" {
+  name              = "${var.prefix}-${random_string.random.result}-ns"
+  resource_group_id = module.resource_group.resource_group_id
+}
+
+
+########################################################################################################################
 # Resource group
 ########################################################################################################################
 
@@ -336,9 +354,4 @@ data "ibm_database_connection" "database_connection" {
   deployment_id = module.database.id
   user_id       = module.database.adminuser
   user_type     = "database"
-}
-
-resource "ibm_cr_namespace" "rg_namespace" {
-  name              = "${var.prefix}-ns"
-  resource_group_id = module.resource_group.resource_group_id
 }
