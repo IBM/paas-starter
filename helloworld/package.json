@@ -2,9 +2,9 @@
   "name": "clouddatabases-postgresql-helloworld-nodejs",
   "version": "1.0.0",
   "dependencies": {
-    "body-parser": "^2.2.2",
+    "body-parser": "^2.3.0",
     "express": "^5.2.1",
-    "pg": "^8.20.0"
+    "pg": "^8.23.0"
   },
   "main": "server.js",
   "scripts": {
