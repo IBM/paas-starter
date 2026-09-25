@@ -265,7 +265,7 @@ module "vpe" {
 
 module "logs_agent" {
   source                    = "terraform-ibm-modules/logs-agent/ibm"
-  version                   = "1.23.0"
+  version                   = "1.26.4"
   depends_on                = [module.vpe]
   cluster_id                = module.ocp_base.cluster_id
   cluster_resource_group_id = module.resource_group.resource_group_id
