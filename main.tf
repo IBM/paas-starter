@@ -299,7 +299,7 @@ module "logs_agent" {
 
 module "monitoring_agent" {
   source  = "terraform-ibm-modules/monitoring-agent/ibm"
-  version = "1.24.0"
+  version = "1.25.9"
   cluster_id                = module.ocp_base.cluster_id
   cluster_resource_group_id = module.resource_group.resource_group_id
   is_vpc_cluster            = true
