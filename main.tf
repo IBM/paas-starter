@@ -317,7 +317,7 @@ module "monitoring_agent" {
 
 module "database" {
   source              = "terraform-ibm-modules/icd-postgresql/ibm"
-  version             = "5.4.4"
+  version             = "5.5.0"
   resource_group_id   = module.resource_group.resource_group_id
   name                = "${var.prefix}-data-store"
   region              = var.region
