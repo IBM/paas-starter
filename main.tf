@@ -110,7 +110,7 @@ module "cloud_logs" {
 
 module "cloud_monitoring" {
   source            = "terraform-ibm-modules/cloud-monitoring/ibm"
-  version           = "1.17.0"
+  version           = "1.17.2"
   resource_group_id = module.resource_group.resource_group_id
   region            = var.region
   instance_name     = "${var.prefix}-cloud-monitoring"
